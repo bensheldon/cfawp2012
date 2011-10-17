@@ -613,13 +613,46 @@ function create_post_type() {
 				'singular_name' => __( 'Projects' )
 			),
 			'public' => true,
-            'rewrite' => false,
-            'capability_type' => 'post',
-            'supports' => array('title','editor','author', 'excerpt', 'custom-fields', 'thumbnail',)
+      'rewrite' => array(
+        'slug' => 'projects',
+        'with_front' => false,
+      ),
+      'capability_type' => 'post',
+      'supports' => array('title','editor','author', 'excerpt', 'custom-fields', 'thumbnail',)
 		)
 	);
+	add_rewrite_tag( '%projects%', '([^/]+)');
+	add_permastruct( 'cfa_project', 'projects/%year%/%cfa_project%', false, 1 );
 }
 
-
-
+/** 
+ * Add custom permalink tags for our Project custom post type
+ */
+add_action( 'post_type_link', 'cfa_project_permalinks', 10, 4 ); 
+function cfa_project_permalinks( $link, $post, $leavename, $sample ){
+  // don't overwrite other rewrite rules!
+  if($post->post_type != 'cfa_project') {
+    return $link;
+  }
+  $rewritecode = array(
+    '%year%',
+    '%monthnum%',
+    '%day%',
+    $leavename ? '' : '%postname%',
+    $leavename ? '' : '%pagename%',
+    $leavename ? '' : '%cfa_project%',
+  );
+  $unixtime = strtotime($post->post_date);
+  $date = explode(' ', date('Y m d', $unixtime));
+  $replace_array = array(
+    $date[0],
+    $date[1],
+    $date[2],
+    $post->post_name,
+    $post->post_name,
+    $post->post_name,
+  );
+  $path = str_replace($rewritecode, $replace_array, $link);
+  return $path;
+}
 ?>
